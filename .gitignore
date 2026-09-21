@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+.devkeys/
+*.egg-info/
+.venv/
+
+# Private study material
+authorization-gateway-study-guide.md
+authorization-gateway-study-guide-es.md
