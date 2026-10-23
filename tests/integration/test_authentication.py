@@ -88,10 +88,9 @@ def test_missing_tenant_id_claim_is_rejected(dev_private_key_pem, dev_kid):
     assert exc_info.value.code == "MISSING_CLAIM"
 
 
-def test_disallowed_algorithm_is_rejected(dev_private_key_pem, dev_kid, key_provider):
-    # HS256 signed with the RSA private key's PEM bytes as an HMAC secret.
-    # Even if this "verifies" as HS256, our allowlist is RS256-only, so the
-    # algorithm check must reject it before any key material is even used.
+def test_disallowed_algorithm_is_rejected(dev_kid, key_provider):
+    # HS256 is signed with a sufficiently long test-only secret.
+    # The server-side allowlist must reject the algorithm before key resolution.
     now = int(time.time())
     claims = {
         "sub": "user-a1",
@@ -105,7 +104,10 @@ def test_disallowed_algorithm_is_rejected(dev_private_key_pem, dev_kid, key_prov
         "exp": now + 900,
     }
     forged_token = pyjwt.encode(
-        claims, "attacker-controlled-secret", algorithm="HS256", headers={"kid": dev_kid}
+        claims,
+        "test-only-secret-that-is-at-least-32-bytes-long",
+        algorithm="HS256",
+        headers={"kid": dev_kid},
     )
     with pytest.raises(AuthenticationError) as exc_info:
         verify_token(forged_token, settings, key_provider)
