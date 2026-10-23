@@ -108,6 +108,8 @@ def update_vault_item(
 
     _authorize_or_raise(request, identity, "vault.update", _resource_context(resource), correlation_id)
     updated = store.update_resource_value(resource_id, body.secret_value)
+    if updated is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found")
     return VaultResourceOut(**updated.__dict__)
 
 
