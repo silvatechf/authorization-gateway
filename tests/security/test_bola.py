@@ -31,15 +31,21 @@ def test_denied_read_does_not_leak_the_secret_value(client, auth_header):
 
 
 def test_denied_update_does_not_mutate_the_resource(client, auth_header):
-    client.patch(
+    response = client.patch(
         "/api/v1/vault/vault-a1",
         headers=auth_header("user-a2"),
         json={"secret_value": "attacker-value"},
     )
-    # Confirm the object was NOT actually changed by the denied attempt.
-    owner_read = client.get("/api/v1/vault/vault-a1", headers=auth_header("user-a1"))
-    assert owner_read.json()["secret_value"] == "s3cr3t-a1"
 
+    assert response.status_code == 403
+
+    # A denied request must not mutate the resource.
+    owner_read = client.get(
+        "/api/v1/vault/vault-a1",
+        headers=auth_header("user-a1"),
+    )
+    assert owner_read.status_code == 200
+    assert owner_read.json()["secret_value"] == "s3cr3t-a1"
 
 def test_owner_relationship_is_re_checked_on_every_object_not_cached_by_caller(client, auth_header):
     # user-a1 legitimately owns vault-a1. They must NOT be able to reuse
