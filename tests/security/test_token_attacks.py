@@ -77,16 +77,23 @@ def test_alg_none_attack_is_rejected(client):
     assert response.status_code == 401
 
 
-def test_hs256_key_confusion_attack_is_rejected(client, dev_private_key_pem):
-    # Attacker guesses (or obtains) the RSA public key and tries to use it
-    # as an HMAC secret to self-sign an HS256 token. Our algorithm
-    # allowlist (RS256 only) must reject this before any key is even used.
-    forged = pyjwt.encode(
-        _valid_claims(),
-        key="some-guessed-or-public-value",
-        algorithm="HS256",
-        headers={"kid": "irrelevant"},
-    )
+def test_hs256_key_confusion_attack_is_rejected(client, dev_kid):
+    # Model an HS256 key-confusion attempt: sign with the public RSA key bytes.
+    # Build the token manually because PyJWT rejects asymmetric PEM material
+    # as an HMAC secret. The server must reject HS256 before key resolution.
+    import hashlib
+    import hmac
+
+    from app.security.authentication import keys as dev_keys
+
+    public_pem = dev_keys.load_public_key_pem(settings.dev_keys_dir)
+    header = {"alg": "HS256", "typ": "JWT", "kid": dev_kid}
+    payload = _valid_claims()
+    header_b64 = _b64url(json.dumps(header).encode())
+    payload_b64 = _b64url(json.dumps(payload).encode())
+    signing_input = f"{header_b64}.{payload_b64}".encode("ascii")
+    signature = hmac.new(public_pem, signing_input, hashlib.sha256).digest()
+    forged = f"{header_b64}.{payload_b64}.{_b64url(signature)}"
     response = client.get("/api/v1/vault/vault-a1", headers={"Authorization": f"Bearer {forged}"})
     assert response.status_code == 401
 
