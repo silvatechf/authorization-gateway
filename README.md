@@ -4,6 +4,36 @@ A security-focused authorization gateway built with **FastAPI and PyJWT**, demon
 
 > **Portfolio project:** designed to demonstrate security architecture, implementation, and verification practices. It is not presented as a production-ready authorization platform.
 
+## Quick start
+
+Requirements: Python 3.11 and, optionally, Docker for containerized execution.
+
+On Windows PowerShell, create and activate a virtual environment, then install the development dependencies:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+```
+
+Start the API in development mode:
+
+```powershell
+uvicorn app.main:app --reload
+```
+
+Run the verification checks:
+
+```powershell
+python -m ruff check .
+python -m mypy app
+python -m pytest -v
+python -m bandit -r app -q
+python -m pip_audit -r requirements.txt
+```
+
+The CI workflow also builds the Docker image. These commands are documented entry points; run them locally to confirm the current environment passes.
+
 ---
 
 ## What this project demonstrates
@@ -144,7 +174,7 @@ This reduces the ability to use the API as a resource-existence oracle.
 
 ## Authorization Model
 
-The authorization decision is based on multiple independent security dimensions:
+The authorization decision is based on multiple security dimensions, with ownership as an explicit alternative path for selected actions:
 
 ```text
 Identity
@@ -165,15 +195,17 @@ Identity
 
 The policy table currently defines:
 
-| Action                   | Owner | Required Role | Required Scope |
-| ------------------------ | ----: | ------------- | -------------- |
-| `vault.read`             |   Yes | `admin`       | `vault:read`   |
-| `vault.update`           |   Yes | `admin`       | `vault:write`  |
-| `vault.delete`           |    No | `admin`       | `vault:delete` |
-| `vault.share`            |   Yes | `admin`       | `vault:share`  |
-| `vault.admin`            |    No | `admin`       | `vault:admin`  |
-| `admin.resources.create` |    No | `admin`       | `admin:write`  |
-| `admin.audit.read`       |    No | `admin`       | `admin:read`   |
+| Action                   | Owner access | Alternative privileged access |
+| ------------------------ | ------------ | ----------------------------- |
+| `vault.read`             | Allowed      | `admin` role + `vault:read` scope |
+| `vault.update`           | Allowed      | `admin` role + `vault:write` scope |
+| `vault.delete`           | Not allowed  | `admin` role + `vault:delete` scope |
+| `vault.share`            | Allowed      | `admin` role + `vault:share` scope |
+| `vault.admin`            | Not allowed  | `admin` role + `vault:admin` scope |
+| `admin.resources.create` | Not allowed  | `admin` role + `admin:write` scope |
+| `admin.audit.read`       | Not allowed  | `admin` role + `admin:read` scope |
+
+For actions marked **Allowed**, ownership is an independent authorization path: the owner can be allowed without satisfying the alternative role-and-scope requirements. Tenant isolation is still checked first.
 
 Ownership and administrative permissions are therefore treated as separate authorization mechanisms.
 
