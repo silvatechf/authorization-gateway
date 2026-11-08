@@ -85,7 +85,10 @@ def verify_token(token: str, settings: Settings, key_provider) -> dict:
     if not isinstance(subject_id, str) or not subject_id.strip():
         raise AuthenticationError("INVALID_CLAIM_TYPE", "'sub' claim must be a non-empty string")
 
-    tenant_id = claims.get("tenant_id")
+    if "tenant_id" not in claims:
+        raise AuthenticationError("MISSING_CLAIM", "Token is missing the required 'tenant_id' claim")
+
+    tenant_id = claims["tenant_id"]
     if not isinstance(tenant_id, str) or not tenant_id.strip():
         raise AuthenticationError("INVALID_CLAIM_TYPE", "'tenant_id' claim must be a non-empty string")
 
