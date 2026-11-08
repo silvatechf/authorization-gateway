@@ -1,6 +1,8 @@
 """Unit tests for the small pure-function helpers behind the policy table."""
 from __future__ import annotations
 
+import pytest
+
 from app.security.authorization.policy import POLICY_TABLE, has_all_scopes, has_any_role
 
 
@@ -23,6 +25,16 @@ def test_has_all_scopes_requires_every_scope():
 
 def test_has_all_scopes_trivially_true_when_no_scope_required():
     assert has_all_scopes([], []) is True
+
+
+def test_policy_rules_are_immutable():
+    rule = POLICY_TABLE["vault.read"]
+    with pytest.raises(TypeError):
+        POLICY_TABLE["new.action"] = rule
+    with pytest.raises(AttributeError):
+        rule.roles.append("super-admin")
+    with pytest.raises(AttributeError):
+        rule.scopes.append("vault:delete")
 
 
 def test_every_registered_action_has_a_non_empty_role_requirement_or_is_owner_only():

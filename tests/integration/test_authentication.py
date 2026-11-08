@@ -37,6 +37,35 @@ def test_scopes_as_space_delimited_string_is_normalized_to_a_list(token_factory,
     assert claims["scopes"] == ["vault:read", "vault:write"]
 
 
+@pytest.mark.parametrize(
+    ("claim_overrides", "expected_message"),
+    [
+        ({"sub": 123}, "'sub' claim must be a non-empty string"),
+        ({"sub": ""}, "'sub' claim must be a non-empty string"),
+        ({"tenant_id": 123}, "'tenant_id' claim must be a non-empty string"),
+        ({"tenant_id": ""}, "'tenant_id' claim must be a non-empty string"),
+        ({"roles": [["admin"]]}, "'roles' claim must be a list of non-empty strings"),
+        ({"roles": [None]}, "'roles' claim must be a list of non-empty strings"),
+        (
+            {"scopes": [{"scope": "vault:read"}]},
+            "'scopes' claim must be a list of non-empty strings or a space-delimited string",
+        ),
+        (
+            {"scopes": [None]},
+            "'scopes' claim must be a list of non-empty strings or a space-delimited string",
+        ),
+    ],
+)
+def test_malformed_identity_claim_values_are_rejected(
+    token_factory, key_provider, claim_overrides, expected_message
+):
+    token = token_factory("user-a1", claim_overrides=claim_overrides)
+    with pytest.raises(AuthenticationError) as exc_info:
+        verify_token(token, settings, key_provider)
+    assert exc_info.value.code == "INVALID_CLAIM_TYPE"
+    assert exc_info.value.message == expected_message
+
+
 def test_expired_token_is_rejected(token_factory, key_provider):
     token = token_factory("user-a1", ttl=-10)
     with pytest.raises(AuthenticationError) as exc_info:
