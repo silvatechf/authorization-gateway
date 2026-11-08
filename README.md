@@ -1,6 +1,8 @@
 # Authorization Gateway
 
-A security-focused authorization gateway built with **FastAPI and PyJWT**, demonstrating practical API security engineering across authentication, authorization, multi-tenant isolation, security testing, and DevSecOps automation.
+[![CI](https://github.com/silvatechf/authorization-gateway/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/silvatechf/authorization-gateway/actions/workflows/ci.yml)
+
+A Python backend portfolio project built with **FastAPI and PyJWT**, demonstrating API authentication, authorization, multi-tenant access control, security testing, and automated quality checks.
 
 > **Portfolio project:** designed to demonstrate security architecture, implementation, and verification practices. It is not presented as a production-ready authorization platform.
 
@@ -536,7 +538,7 @@ No real credentials, private signing keys, API keys, or production secrets shoul
 
 ## Project Objective
 
-This repository is a practical demonstration of **Cloud Security / DevSecOps engineering** applied to API authorization.
+This repository is a practical demonstration of **Python backend engineering with an Application Security focus**, using API authorization as the central problem.
 
 The emphasis is not on building a large application. It is on demonstrating the engineering process:
 
