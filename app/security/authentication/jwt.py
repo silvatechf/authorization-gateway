@@ -64,6 +64,8 @@ def verify_token(token: str, settings: Settings, key_provider) -> dict:
                 "verify_aud": True,
                 "verify_iss": True,
                 "verify_signature": True,
+                # Validate sub below so malformed trusted claims use our stable error contract.
+                "verify_sub": False,
             },
         )
     except pyjwt.exceptions.ExpiredSignatureError as exc:
